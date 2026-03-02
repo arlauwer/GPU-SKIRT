@@ -104,15 +104,14 @@ class MediumSystem : public SimulationItem
         ATTRIBUTE_RELEVANT_IF(radiationFieldOptions, "!NoMedium")
 
         PROPERTY_ITEM_LIST(media, Medium, "the transfer media")
-        ATTRIBUTE_DEFAULT_VALUE(media, "GeometricMedium")
+        ATTRIBUTE_DEFAULT_VALUE(media, "ParticleMedium")
         ATTRIBUTE_REQUIRED_IF(media, "!NoMedium")
 
         PROPERTY_ITEM(samplingOptions, SamplingOptions, "the spatial grid sampling options")
         ATTRIBUTE_DEFAULT_VALUE(samplingOptions, "SamplingOptions")
 
         PROPERTY_ITEM(grid, SpatialGrid, "the spatial grid")
-        ATTRIBUTE_DEFAULT_VALUE(grid,
-                                "Dimension3:PolicyTreeSpatialGrid;Dimension2:Cylinder2DSpatialGrid;Sphere1DSpatialGrid")
+        ATTRIBUTE_DEFAULT_VALUE(grid, "CartesianSpatialGrid")
 
     ITEM_END()
 

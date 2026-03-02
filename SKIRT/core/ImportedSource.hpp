@@ -69,8 +69,6 @@ class Snapshot;
 class ImportedSource : public Source
 {
     ITEM_ABSTRACT(ImportedSource, Source, "a primary source imported from snapshot data")
-        ATTRIBUTE_TYPE_INSERT(ImportedSource, "Dimension3")
-
         PROPERTY_STRING(filename, "the name of the file to be imported")
 
         ATTRIBUTE_SUB_PROPERTIES_HERE(ImportedSource)
@@ -101,7 +99,7 @@ class ImportedSource : public Source
         ATTRIBUTE_DISPLAYED_IF(useColumns, "Level3")
 
         PROPERTY_ITEM(sedFamily, SEDFamily, "the SED family for assigning spectra to the imported sources")
-        ATTRIBUTE_DEFAULT_VALUE(sedFamily, "BlackBodySEDFamily")
+        ATTRIBUTE_DEFAULT_VALUE(sedFamily, "BruzualCharlotSEDFamily")
 
     ITEM_END()
 

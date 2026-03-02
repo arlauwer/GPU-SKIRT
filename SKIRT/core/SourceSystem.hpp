@@ -90,7 +90,7 @@ class SourceSystem : public SimulationItem
         ATTRIBUTE_DISPLAYED_IF(sourceBias, "Level3")
 
         PROPERTY_ITEM_LIST(sources, Source, "the primary sources")
-        ATTRIBUTE_DEFAULT_VALUE(sources, "GeometricSource")
+        ATTRIBUTE_DEFAULT_VALUE(sources, "ParticleSource")
         ATTRIBUTE_REQUIRED_IF(sources, "false")
 
     ITEM_END()
