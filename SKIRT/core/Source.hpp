@@ -9,7 +9,7 @@
 #include "SimulationItem.hpp"
 #include "SourceWavelengthRangeInterface.hpp"
 #include "WavelengthDistribution.hpp"
-class PhotonPacket;
+class PhotonPackets;
 class Random;
 
 //////////////////////////////////////////////////////////////////////
@@ -112,6 +112,11 @@ public:
         SourceSystem class for more information. The default implementation of this function does
         nothing. */
     virtual void prepareForLaunch(double sourceBias, size_t firstIndex, size_t numIndices);
+
+    /** This function causes the photon packet \em pp to be launched from the source using the
+        given history index and luminosity contribution. The photon packet's contents is fully
+        (re-)initialized so that it is ready to start its lifecycle. */
+    virtual void launch(PhotonPackets& pp, size_t index, size_t batchIndex, double L) const = 0;
 
     //======================== Other Functions =======================
 

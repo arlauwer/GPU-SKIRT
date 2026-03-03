@@ -181,6 +181,28 @@ public:
         scheme described in the header documentation of this class. */
     void prepareForLaunch(double sourceBias, size_t firstIndex, size_t numIndices) override;
 
+    /** This function causes the photon packet \em pp to be launched from the source using the
+         given history index and luminosity contribution. It proceeds as follows.
+
+         First, the function finds the entity index that corresponding to the history index using
+         the map constructed by the prepareForLaunch() function. It obtains the normalized spectral
+         distribition (and the corresponding cumulative distribution) for that entity from the SED
+         family configured for this source. In fact, the function sets up a thread-local object
+         that caches the spectral distribution for an entity between consecutive invocations of the
+         launch() function. This works even if there are multiple sources of this type because each
+         thread handles a single photon packet at a time.
+
+         Subsequently, the function samples a wavelength from the entity's SED, properly handling
+         the configured wavelength biasing, and asks the Snapshot object to generate a random
+         launch position for the entity. If the importVelocity flag is enabled, the function also
+         constructs an object that serves a RedshiftInterface appropriate for the velocity of the
+         entity. Again, this object is allocated in thread-local storage so that it stays around
+         after being handed to the photon packet.
+
+         Finally, the function causes the photon packet to be launched with the information
+         described above and an isotropic launch direction. */
+    void launch(PhotonPackets& pp, size_t index, size_t batchIndex, double L) const override;
+
     /** This function returns (a pointer to) the snapshot object associated with this imported
         source. It is intended to provide InputModelProbe instances with direct access to the
         snapshot for probing imported information that is not otherwise made available to the

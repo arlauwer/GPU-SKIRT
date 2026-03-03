@@ -5,8 +5,13 @@
 
 #include "MonteCarloSimulation.hpp"
 #include "Log.hpp"
+#include "Parallel.hpp"
+#include "ParallelFactory.hpp"
+#include "PhotonPackets.hpp"
+#include "SourceSystem.hpp"
 #include "StringUtils.hpp"
 #include "TimeLogger.hpp"
+#include <cstdio>
 
 ////////////////////////////////////////////////////////////////////
 
@@ -74,6 +79,7 @@ void MonteCarloSimulation::runPrimaryEmission()
 
     // shoot photons from primary sources, if needed
     size_t Npp = _config->numPrimaryPackets();
+    size_t Nbp = _config->numBatchPackets();
     if (!Npp)
     {
         log()->warning("Skipping primary emission because no photon packets were requested");
@@ -86,6 +92,24 @@ void MonteCarloSimulation::runPrimaryEmission()
     {
         initProgress(segment, Npp);
         sourceSystem()->prepareForLaunch(Npp);
+
+        auto parallel = find<ParallelFactory>()->parallel();
+
+        PhotonPackets pp;
+        size_t currentBatch;
+        for (size_t firstIndex = 0; firstIndex < Npp; firstIndex += currentBatch)
+        {
+            // batch is at most the total photons left
+            currentBatch = min(Nbp, Npp - firstIndex);
+            pp.setBatchSize(currentBatch);
+
+            // launch photon packets in parallel
+            // this prepares the data-oriented structure, PhotonPackets, for the GPU kernel
+            parallel->call(currentBatch,
+                           [this, &pp, &firstIndex](size_t i, size_t n) { launch(pp, firstIndex + i, n); });
+
+            // GPU kernel with prepared photon packets
+        }
 
         // flush intruments
     }
@@ -108,6 +132,17 @@ void MonteCarloSimulation::logProgress(size_t numDone)
 {
     // log message if the minimum time has elapsed
     log()->infoIfElapsed("Launched " + _segment + " photon packets: ", numDone);
+}
+
+////////////////////////////////////////////////////////////////////
+
+void MonteCarloSimulation::launch(PhotonPackets& pp, size_t firstIndex, size_t numIndices)
+{
+    auto ss = sourceSystem();
+    for (size_t i = 0; i != numIndices; ++i)
+    {
+        ss->launch(pp, firstIndex + i, i);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////

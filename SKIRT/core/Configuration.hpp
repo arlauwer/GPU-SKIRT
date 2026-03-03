@@ -175,6 +175,9 @@ public:
         segment. */
     double numPrimaryPackets() const { return _numPrimaryPackets; }
 
+    /** Returns the number of photon packets to be processed in a single batch. */
+    double numBatchPackets() const { return _numBatchPackets; }
+
     // ----> photon cycle
 
     /** Returns the minimum weight reduction factor before a photon packet is terminated. */
@@ -227,6 +230,7 @@ private:
 
     // phases, iterations, number of packets
     double _numPrimaryPackets{0.};
+    double _numBatchPackets{0.};
 
     // photon cycle
     double _minWeightReduction{1e4};

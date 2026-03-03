@@ -5,6 +5,8 @@
 
 #include "SourceSystem.hpp"
 #include "FatalError.hpp"
+#include "PhotonPackets.hpp"
+#include "Source.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -82,6 +84,16 @@ void SourceSystem::prepareForLaunch(size_t numPackets)
 
     // calculate the average luminosity contribution for each packet
     _Lpp = _L / numPackets;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+void SourceSystem::launch(PhotonPackets& pp, size_t index, size_t batchIndex) const
+{
+    // ask the appropriate source to prepare the photon packet for launch
+    auto h = std::upper_bound(_Iv.cbegin(), _Iv.cend(), index) - _Iv.cbegin() - 1;
+    double weight = _Lv[h] / _Wv[h];
+    _sources[h]->launch(pp, index, batchIndex, _Lpp * weight);
 }
 
 //////////////////////////////////////////////////////////////////////

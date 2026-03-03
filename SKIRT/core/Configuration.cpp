@@ -35,6 +35,7 @@ void Configuration::setupSelfBefore()
 
     // retrieve base number of packets
     _numPrimaryPackets = sim->numPackets();
+    _numBatchPackets = sim->numBatchPackets();
 
     // retrieve wavelength-related options
     {

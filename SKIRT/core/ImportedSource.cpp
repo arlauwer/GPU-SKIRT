@@ -10,6 +10,7 @@
 #include "NR.hpp"
 #include "Parallel.hpp"
 #include "ParallelFactory.hpp"
+#include "PhotonPackets.hpp"
 #include "Random.hpp"
 #include "SEDFamily.hpp"
 #include "Snapshot.hpp"
@@ -264,6 +265,67 @@ namespace
     // setup a velocity instance (with the redshift interface) for each parallel execution thread; this works even if
     // there are multiple sources of this type because each thread handles a single photon packet at a time
     thread_local EntityVelocity t_velocity;
+}
+
+////////////////////////////////////////////////////////////////////
+
+void ImportedSource::launch(PhotonPackets& pp, size_t index, size_t batchIndex, double L) const
+{
+    // select the entity corresponding to this history index
+    auto m = std::upper_bound(_Iv.cbegin(), _Iv.cend(), index) - _Iv.cbegin() - 1;
+
+    // if there are no entities in the source, or the selected entity has no contribution,
+    // launch a photon packet with zero luminosity
+    if (m < 0 || !_Lv[m])
+    {
+        pp.launch(batchIndex, _arbitaryWavelength, 0., Position(), Direction());
+        return;
+    }
+
+    // calculate the weight related to biased source selection
+    double ws = _Lv[m] / _Wv[m];
+
+    // get the normalized regular and cumulative distributions for this entity, if not already available
+    t_sed.setIfNeeded(m, _snapshot, _sedFamily, _wavelengthRange);
+
+    // generate a random wavelength from the SED and/or from the bias distribution
+    double lambda, w;
+    if (!_xi)
+    {
+        // no biasing -- simply use the intrinsic spectral distribution
+        lambda = t_sed.generateWavelength(random());
+        w = 1.;
+    }
+    else
+    {
+        // biasing -- use one or the other distribution
+        if (random()->uniform() > _xi)
+            lambda = t_sed.generateWavelength(random());
+        else
+            lambda = _biasDistribution->generateWavelength();
+
+        // calculate the compensating weight factor
+        double s = t_sed.specificLuminosity(lambda);
+        if (!s)
+        {
+            // if the wavelength can't occur in the intrinsic distribution,
+            // the weight factor is zero regardless of the probability in the bias distribution
+            // (handling this separately also avoids NaNs in the pathological case s=b=0)
+            w = 0.;
+        }
+        else
+        {
+            // regular composite bias weight
+            double b = _biasDistribution->probability(lambda);
+            w = s / ((1 - _xi) * s + _xi * b);
+        }
+    }
+
+    // generate a random position for this entity
+    Position bfr = _snapshot->generatePosition(m);
+
+    // launch the photon packet with isotropic direction
+    pp.launch(batchIndex, lambda, L * w * ws, bfr, random()->direction());
 }
 
 ////////////////////////////////////////////////////////////////////

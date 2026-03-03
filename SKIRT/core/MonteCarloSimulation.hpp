@@ -221,6 +221,11 @@ class MonteCarloSimulation : public Simulation
         ATTRIBUTE_MAX_VALUE(numPackets, "1e19]")
         ATTRIBUTE_DEFAULT_VALUE(numPackets, "1e6")
 
+        PROPERTY_DOUBLE(numBatchPackets, "the default number of photon packets to be processed in a single batch")
+        ATTRIBUTE_MIN_VALUE(numBatchPackets, "[0")
+        ATTRIBUTE_MAX_VALUE(numBatchPackets, "1e19]")
+        ATTRIBUTE_DEFAULT_VALUE(numBatchPackets, "1e4")
+
         PROPERTY_ITEM(sourceSystem, SourceSystem, "the source system")
         ATTRIBUTE_DEFAULT_VALUE(sourceSystem, "SourceSystem")
 
@@ -288,6 +293,8 @@ private:
         must be called regularly while processing photon packets. The argument specifies the number
         of photon packets processed. */
     void logProgress(size_t numDone);
+
+    void launch(PhotonPackets& pp, size_t firstIndex, size_t numIndices);
 
     //======================== Data Members ========================
 
