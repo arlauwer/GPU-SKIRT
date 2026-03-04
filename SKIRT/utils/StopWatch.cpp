@@ -101,7 +101,7 @@ vector<string> StopWatch::report()
                                  + StringUtils::toString(total, 'f', 3, 10) + " s  "
                                  + StringUtils::toString(100 * total / total0, 'f', 1, 5) + " %");
                 totalcount += _count[i];
-                maxcount = max(maxcount, _count[i]);
+                maxcount = std::max(maxcount, _count[i]);
             }
         }
 

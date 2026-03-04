@@ -100,7 +100,7 @@ void MonteCarloSimulation::runPrimaryEmission()
         for (size_t firstIndex = 0; firstIndex < Npp; firstIndex += currentBatch)
         {
             // batch is at most the total photons left
-            currentBatch = min(Nbp, Npp - firstIndex);
+            currentBatch = std::min(Nbp, Npp - firstIndex);
             pp.setBatchSize(currentBatch);
 
             // launch photon packets in parallel
