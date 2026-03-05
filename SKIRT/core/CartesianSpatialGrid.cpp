@@ -58,6 +58,22 @@ int CartesianSpatialGrid::cellIndex(Position bfr) const
 
 //////////////////////////////////////////////////////////////////////
 
+void CartesianSpatialGrid::cellIndices(int& i, int& j, int& k, Position bfr) const
+{
+    i = NR::locateFail(_xv, bfr.x());
+    j = NR::locateFail(_yv, bfr.y());
+    k = NR::locateFail(_zv, bfr.z());
+}
+
+//////////////////////////////////////////////////////////////////////
+
+int CartesianSpatialGrid::index(int i, int j, int k) const
+{
+    return k + _Nz * j + _Nz * _Ny * i;
+}
+
+//////////////////////////////////////////////////////////////////////
+
 Position CartesianSpatialGrid::centralPositionInCell(int m) const
 {
     return Position(box(m).center());
@@ -68,13 +84,6 @@ Position CartesianSpatialGrid::centralPositionInCell(int m) const
 Position CartesianSpatialGrid::randomPositionInCell(int m) const
 {
     return random()->position(box(m));
-}
-
-//////////////////////////////////////////////////////////////////////
-
-int CartesianSpatialGrid::index(int i, int j, int k) const
-{
-    return k + _Nz * j + _Nz * _Ny * i;
 }
 
 //////////////////////////////////////////////////////////////////////

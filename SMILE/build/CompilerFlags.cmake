@@ -10,6 +10,8 @@
 set_property(TARGET ${TARGET} PROPERTY CXX_STANDARD 17)
 set_property(TARGET ${TARGET} PROPERTY CXX_STANDARD_REQUIRED ON)
 
+set(CMAKE_CXX_COMPILER clang++)
+
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|IntelLLVM")  # the Intel oneAPI compiler supports Clang options
     target_compile_options(${TARGET} PRIVATE -Wall -W -pedantic)
     if (NO_EXTRA_WARNINGS)
@@ -54,19 +56,30 @@ endif()
 # ------------------------------------------------------------------
 # OpenMP GPU AMD
 # ------------------------------------------------------------------
-execute_process(COMMAND rocminfo COMMAND grep -m 1 -E gfx[^0]{1} COMMAND sed -e "s/ *Name: *//" OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE ROCM_GPU)
+execute_process(
+    COMMAND rocminfo
+    COMMAND grep -m 1 -E "gfx[^0]{1}"
+    COMMAND sed -e "s/ *Name: *//"]
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    OUTPUT_VARIABLE ROCM_GPU
+)
 
-string(REPLACE -O2 -O3 CMAKE_CXX_FLAGS_RELWITHDEBINFO ${CMAKE_CXX_FLAGS_RELWITHDEBINFO})
-set(CMAKE_CXX_FLAGS_DEBUG "-ggdb")
-# set(CMAKE_CXX_FLAGS "-fstrict-aliasing -faligned-allocation -fnew-alignment=256")
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp --offload-arch=${ROCM_GPU}")
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -foffload=-march=${ROCM_GPU}")
-elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Cray")
-   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
-   #the cray compiler decides the offload-arch by loading appropriate modules
-   #module load craype-accel-amd-gfx942 for example
+if (ROCM_GPU)
+    message(STATUS "AMD GPU detected: ${ROCM_GPU}")
+
+    # string(REPLACE -O2 -O3 CMAKE_CXX_FLAGS_RELWITHDEBINFO ${CMAKE_CXX_FLAGS_RELWITHDEBINFO})
+    # set(CMAKE_CXX_FLAGS_DEBUG "-ggdb")
+
+    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        target_compile_options(${TARGET} PRIVATE -fopenmp --offload-arch=${ROCM_GPU})
+    elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+        target_compile_options(${TARGET} PRIVATE -fopenmp -foffload=-march=${ROCM_GPU})
+    elseif (CMAKE_CXX_COMPILER_ID MATCHES "Cray")
+        target_compile_options(${TARGET} PRIVATE -fopenmp)
+    endif()
+else()
+    message(STATUS "No AMD GPU detected")
+    find_package(OpenMP REQUIRED)
+    target_compile_options(${TARGET} PRIVATE -fopenmp)
 endif()
-
 # ------------------------------------------------------------------

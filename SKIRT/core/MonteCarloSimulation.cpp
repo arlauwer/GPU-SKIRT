@@ -4,10 +4,13 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "MonteCarloSimulation.hpp"
+#include "CartesianSpatialGrid.hpp"
 #include "Log.hpp"
+#include "MediumSystem.hpp"
 #include "Parallel.hpp"
 #include "ParallelFactory.hpp"
 #include "PhotonPackets.hpp"
+#include "Position.hpp"
 #include "SourceSystem.hpp"
 #include "StringUtils.hpp"
 #include "TimeLogger.hpp"
@@ -94,24 +97,27 @@ void MonteCarloSimulation::runPrimaryEmission()
         sourceSystem()->prepareForLaunch(Npp);
 
         auto parallel = find<ParallelFactory>()->parallel();
+        auto cart = find<CartesianSpatialGrid>();
+        _kernel = new SimulationKernel(cart);
 
-        PhotonPackets pp;
+        PhotonPackets& photons = _kernel->photons();
         size_t currentBatch;
         for (size_t firstIndex = 0; firstIndex < Npp; firstIndex += currentBatch)
         {
             // batch is at most the total photons left
             currentBatch = std::min(Nbp, Npp - firstIndex);
-            pp.setBatchSize(currentBatch);
+            photons.setBatchSize(currentBatch);
 
             // launch photon packets in parallel
             // this prepares the data-oriented structure, PhotonPackets, for the GPU kernel
             parallel->call(currentBatch,
-                           [this, &pp, &firstIndex](size_t i, size_t n) { launch(pp, firstIndex + i, n); });
+                           [this, &photons, firstIndex](size_t i, size_t n) { launch(photons, firstIndex + i, n); });
 
             // GPU kernel with prepared photon packets
+            _kernel->runBatch();
         }
 
-        // flush intruments
+        delete _kernel;  // why is _config not deleted?
     }
 }
 
@@ -139,9 +145,26 @@ void MonteCarloSimulation::logProgress(size_t numDone)
 void MonteCarloSimulation::launch(PhotonPackets& pp, size_t firstIndex, size_t numIndices)
 {
     auto ss = sourceSystem();
-    for (size_t i = 0; i != numIndices; ++i)
+    auto cart = dynamic_cast<CartesianSpatialGrid*>(mediumSystem()->grid());
+    for (size_t b = 0; b != numIndices; ++b)
     {
-        ss->launch(pp, firstIndex + i, i);
+        ss->launch(pp, firstIndex + b, b);
+
+        // set initial cell index
+        double x = pp.rxv[b];
+        double y = pp.ryv[b];
+        double z = pp.rzv[b];
+        Position r(x, y, z);
+
+        int i, j, k;
+        cart->cellIndices(i, j, k, r);
+        int m = cart->index(i, j, k);
+
+        // set cell indices
+        pp.iv[b] = i;
+        pp.jv[b] = j;
+        pp.kv[b] = k;
+        pp.mv[b] = m;
     }
 }
 

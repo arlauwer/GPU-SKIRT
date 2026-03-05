@@ -11,8 +11,8 @@
 #include "MediumSystem.hpp"
 #include "ProbeSystem.hpp"
 #include "Simulation.hpp"
+#include "SimulationKernel.hpp"
 #include "SourceSystem.hpp"
-class SecondarySourceSystem;
 
 //////////////////////////////////////////////////////////////////////
 
@@ -301,7 +301,8 @@ private:
 private:
     // non-discoverable simulation items
     Configuration* _config{new Configuration(this)};
-    SecondarySourceSystem* _secondarySourceSystem{nullptr};  // constructed only when there is secondary emission
+
+    SimulationKernel* _kernel{nullptr};
 
     // data members used by the XXXprogress() functions in this class
     string _segment;  // a string identifying the photon shooting segment for use in the log message

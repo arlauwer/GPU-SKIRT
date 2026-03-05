@@ -2,8 +2,13 @@
 
 void PhotonPackets::launch(size_t batchIndex, double lambda, double L, Position bfr, Direction bfk)
 {
-    _lambdav[batchIndex] = lambda;
-    _weightv[batchIndex] = L;
-    _bfrv[batchIndex] = bfr;
-    _bfkv[batchIndex] = bfk;
+    lambdav[batchIndex] = lambda;
+    weightv[batchIndex] = L;
+    // does not set cell index
+    rxv[batchIndex] = bfr.x();
+    ryv[batchIndex] = bfr.y();
+    rzv[batchIndex] = bfr.z();
+    kxv[batchIndex] = bfk.x();
+    kyv[batchIndex] = bfk.y();
+    kzv[batchIndex] = bfk.z();
 }

@@ -9,6 +9,7 @@
 #include "Array.hpp"
 #include "BoxSpatialGrid.hpp"
 #include "Mesh.hpp"
+#include "Position.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -60,6 +61,13 @@ public:
         and Z directions and calculates the correct index based on these indices. */
     int cellIndex(Position bfr) const override;
 
+    // This overloads the Box::cellIndices() !!!! maybe use different name?
+    void cellIndices(int& i, int& j, int& k, Position bfr) const;
+
+    /** This function returns the index \f$m\f$ corresponding to the three bin indices \f$i\f$,
+       \f$j\f$ and \f$k\f$. The correspondence is \f$m=k+j\,N_z+i\,N_y\,N_z\f$. */
+    int index(int i, int j, int k) const;
+
     /** This function returns the central location from the cell with index \f$m\f$. For a
         cartesian grid, the function first determines the bin indices \f$i\f$ and \f$k\f$ in the X,
         Y and Z directions that correspond to the index \f$m\f$. Then the coordinates \f$x\f$,
@@ -78,10 +86,6 @@ public:
     Position randomPositionInCell(int m) const override;
 
 private:
-    /** This function returns the index \f$m\f$ corresponding to the three bin indices \f$i\f$,
-       \f$j\f$ and \f$k\f$. The correspondence is \f$m=k+j\,N_z+i\,N_y\,N_z\f$. */
-    int index(int i, int j, int k) const;
-
     /** This function calculates the three bin indices \f$i\f$, \f$j\f$ and \f$k\f$ of the cell
         index \f$m\f$, and then returns the coordinates of the corresponding cell as a Box object.
         Since the relation between the index and the three bin indices is
@@ -100,9 +104,7 @@ private:
     Array _yv;
     Array _zv;
 
-    // allow our path segment generator to access our private data members
-    class MySegmentGenerator;
-    friend class MySegmentGenerator;
+    friend class SimulationKernel;
 };
 
 ////////////////////////////////////////////////////////////////////
