@@ -16,11 +16,19 @@ public:
     void setBatchSize(size_t batchSize)
     {
         _b = batchSize;
+
         lambdav.resize(_b, 0);
         weightv.resize(_b, 0);
+
+        iv.resize(_b, 0);
+        jv.resize(_b, 0);
+        kv.resize(_b, 0);
+        mv.resize(_b, 0);
+
         rxv.resize(_b, 0);
         ryv.resize(_b, 0);
         rzv.resize(_b, 0);
+
         kxv.resize(_b, 0);
         kyv.resize(_b, 0);
         kzv.resize(_b, 0);
@@ -43,16 +51,18 @@ public:
 public:
     size_t _b{0};  // batch size
 
+    vector<double> lambdav;
+    vector<double> weightv;
+
     vector<int> iv;
     vector<int> jv;
     vector<int> kv;
     vector<int> mv;
 
-    vector<double> lambdav;
-    vector<double> weightv;
     vector<double> rxv;
     vector<double> ryv;
     vector<double> rzv;
+
     vector<double> kxv;
     vector<double> kyv;
     vector<double> kzv;

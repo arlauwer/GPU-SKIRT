@@ -10,8 +10,6 @@
 set_property(TARGET ${TARGET} PROPERTY CXX_STANDARD 17)
 set_property(TARGET ${TARGET} PROPERTY CXX_STANDARD_REQUIRED ON)
 
-set(CMAKE_CXX_COMPILER clang++)
-
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|IntelLLVM")  # the Intel oneAPI compiler supports Clang options
     target_compile_options(${TARGET} PRIVATE -Wall -W -pedantic)
     if (NO_EXTRA_WARNINGS)
@@ -41,6 +39,8 @@ elseif (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     if (NO_EXTRA_WARNINGS)
         target_compile_options(${TARGET} PRIVATE /wd2220 /wd4018 /wd4101 /wd4477 /wd4996)
     endif()
+elseif (CMAKE_CXX_COMPILER_ID MATCHES "Cray")
+    target_compile_options(${TARGET} PRIVATE -Wall)
 endif()
 
 if (WARNINGS_AS_ERRORS)
@@ -59,7 +59,7 @@ endif()
 execute_process(
     COMMAND rocminfo
     COMMAND grep -m 1 -E "gfx[^0]{1}"
-    COMMAND sed -e "s/ *Name: *//"]
+    COMMAND sed -e "s/ *Name: *//"
     OUTPUT_STRIP_TRAILING_WHITESPACE
     OUTPUT_VARIABLE ROCM_GPU
 )
@@ -72,14 +72,17 @@ if (ROCM_GPU)
 
     if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         target_compile_options(${TARGET} PRIVATE -fopenmp --offload-arch=${ROCM_GPU})
+        target_link_options(${TARGET} PRIVATE -fopenmp --offload-arch=${ROCM_GPU})
     elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
         target_compile_options(${TARGET} PRIVATE -fopenmp -foffload=-march=${ROCM_GPU})
+        target_link_options(${TARGET} PRIVATE -fopenmp -foffload=-march=${ROCM_GPU})
     elseif (CMAKE_CXX_COMPILER_ID MATCHES "Cray")
         target_compile_options(${TARGET} PRIVATE -fopenmp)
+        target_link_options(${TARGET} PRIVATE -fopenmp)
     endif()
 else()
     message(STATUS "No AMD GPU detected")
-    find_package(OpenMP REQUIRED)
     target_compile_options(${TARGET} PRIVATE -fopenmp)
+    target_link_options(${TARGET} PRIVATE -fopenmp)
 endif()
 # ------------------------------------------------------------------

@@ -12,6 +12,7 @@
 #include "PhotonPackets.hpp"
 #include "Position.hpp"
 #include "SourceSystem.hpp"
+#include "SpatialGrid.hpp"
 #include "StringUtils.hpp"
 #include "TimeLogger.hpp"
 #include <cstdio>
@@ -97,7 +98,7 @@ void MonteCarloSimulation::runPrimaryEmission()
         sourceSystem()->prepareForLaunch(Npp);
 
         auto parallel = find<ParallelFactory>()->parallel();
-        auto cart = find<CartesianSpatialGrid>();
+        auto cart = dynamic_cast<CartesianSpatialGrid*>(mediumSystem()->grid());
         _kernel = new SimulationKernel(cart);
 
         PhotonPackets& photons = _kernel->photons();
