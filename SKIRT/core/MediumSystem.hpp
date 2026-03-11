@@ -13,6 +13,7 @@
 #include "RadiationFieldOptions.hpp"
 #include "SamplingOptions.hpp"
 #include "SimulationItem.hpp"
+#include "SimulationKernel.hpp"
 #include "SpatialGrid.hpp"
 #include "Table.hpp"
 class Configuration;
@@ -309,6 +310,23 @@ private:
         photon packet (for example, its polarization state). */
     double opacityExt(double lambda, int m, const PhotonPacket* pp) const;
 
+    //=============== Radiation field ===================
+
+public:
+    /** This function returns an array with the mean radiation field intensity
+        \f$(J_\lambda)_{\ell,m}\f$ in the spatial cell with index \f$m\f$ at each of the wavelength
+        bins \f$\ell\f$ defined by the wavelength grid returned by the
+        Configuration::radiationFieldWLG() function.
+
+        The mean intensity is calculated using \f[ (J_\lambda)_{\ell,m} = \frac{ (L\Delta
+        s)_{\ell,m} }{4\pi\,V_m\,(\Delta \lambda)_\ell} \f] where \f$\ell\f$ is the index of the
+        wavelength bin, \f$(\Delta \lambda)_\ell\f$ is the wavelength bin width, \f$m\f$ is the
+        spatial cell index, \f$V_m\f$ is the volume of the cell, and \f$(L\Delta s)_{\ell,m}\f$ has
+        been accumulated over all photon packets contributing to the bin. The resulting mean
+        intensity \f$J_\lambda\f$ is expressed as an amount of energy per unit of time, per unit of
+        area, per unit of wavelength, and per unit of solid angle. */
+    Array meanIntensity(int m) const;
+
     //======================== Data Members ========================
 
 private:
@@ -338,6 +356,8 @@ private:
 
     // relevant for any simulation mode that includes dust emission
     int _numDustEmissionWavelengths{0};
+
+    friend class SimulationKernel;
 };
 
 ////////////////////////////////////////////////////////////////

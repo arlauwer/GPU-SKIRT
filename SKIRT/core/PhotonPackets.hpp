@@ -25,6 +25,7 @@ public:
         kv.resize(_b, 0);
         mv.resize(_b, 0);
 
+        // packet
         rxv.resize(_b, 0);
         ryv.resize(_b, 0);
         rzv.resize(_b, 0);
@@ -59,6 +60,7 @@ public:
     vector<int> kv;
     vector<int> mv;
 
+    // packet
     vector<double> rxv;
     vector<double> ryv;
     vector<double> rzv;
@@ -67,5 +69,9 @@ public:
     vector<double> kyv;
     vector<double> kzv;
 };
+
+#define MAP_PACKETS(Nb, p) \
+    map(to : p##lambdav [0:Nb], p##weightv [0:Nb]) map(to : p##iv [0:Nb], p##jv [0:Nb], p##kv [0:Nb], p##mv [0:Nb]) \
+        map(to : p##rxv [0:Nb], p##ryv [0:Nb], p##rzv [0:Nb]) map(to : p##kxv [0:Nb], p##kyv [0:Nb], p##kzv [0:Nb])
 
 #endif

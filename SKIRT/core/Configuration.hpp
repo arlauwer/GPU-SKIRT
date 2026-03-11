@@ -216,7 +216,7 @@ private:
     // media
     bool _hasMedium{false};
     bool _mediaNeedGeneratePosition{false};
-    bool _hasConstantPerceivedWavelength{false};
+    bool _hasConstantPerceivedWavelength{true};
     bool _hasSingleConstantSectionMedium{false};
     bool _hasMultipleConstantSectionMedia{false};
     bool _hasScatteringDispersion{false};

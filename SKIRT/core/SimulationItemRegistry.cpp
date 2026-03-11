@@ -23,12 +23,15 @@
 #include "MonteCarloSimulation.hpp"
 #include "ParticleMedium.hpp"
 #include "ParticleSource.hpp"
+#include "PerCellForm.hpp"
 #include "ProbeSystem.hpp"
+#include "RadiationFieldProbe.hpp"
 #include "Random.hpp"
 #include "SEDInstrument.hpp"
 #include "SIUnits.hpp"
 #include "SourceSystem.hpp"
 #include "SpatialGrid.hpp"
+#include "SpatialGridForm.hpp"
 #include "StellarUnits.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -196,6 +199,8 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     // probe system and probes
     ItemRegistry::add<ProbeSystem>();
     ItemRegistry::add<Probe>();
+    ItemRegistry::add<SpatialGridFormProbe>();
+    ItemRegistry::add<RadiationFieldProbe>();
     //   .. convergence
     //   .. source
     //   .. spatial grid
@@ -206,6 +211,9 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     //   .. imported medium
 
     // forms
+    ItemRegistry::add<Form>();
+    ItemRegistry::add<SpatialGridForm>();
+    ItemRegistry::add<PerCellForm>();
 
     // Monte Carlo simulations
     ItemRegistry::add<MonteCarloSimulation>();

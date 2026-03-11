@@ -5,6 +5,7 @@
 
 #include "MonteCarloSimulation.hpp"
 #include "CartesianSpatialGrid.hpp"
+#include "FatalError.hpp"
 #include "Log.hpp"
 #include "MediumSystem.hpp"
 #include "Parallel.hpp"
@@ -12,10 +13,16 @@
 #include "PhotonPackets.hpp"
 #include "Position.hpp"
 #include "SourceSystem.hpp"
-#include "SpatialGrid.hpp"
 #include "StringUtils.hpp"
 #include "TimeLogger.hpp"
 #include <cstdio>
+
+////////////////////////////////////////////////////////////////////
+
+MonteCarloSimulation::~MonteCarloSimulation()
+{
+    delete _kernel;
+}
 
 ////////////////////////////////////////////////////////////////////
 
@@ -59,6 +66,11 @@ void MonteCarloSimulation::runSimulation()
     {
         TimeLogger logger(log(), "the run");
 
+        if (!_config->hasSingleConstantSectionMedium())
+            throw FATALERROR("MonteCarloSimulation:: must use a single constant section medium");
+
+        if (!_config->hasRadiationField()) throw FATALERROR("MonteCarloSimulation:: must have a radiation field");
+
         runPrimaryEmission();
     }
 
@@ -98,8 +110,7 @@ void MonteCarloSimulation::runPrimaryEmission()
         sourceSystem()->prepareForLaunch(Npp);
 
         auto parallel = find<ParallelFactory>()->parallel();
-        auto cart = dynamic_cast<CartesianSpatialGrid*>(mediumSystem()->grid());
-        _kernel = new SimulationKernel(cart);
+        _kernel = new SimulationKernel(_sourceSystem, _mediumSystem);
 
         PhotonPackets& photons = _kernel->photons();
         size_t currentBatch;

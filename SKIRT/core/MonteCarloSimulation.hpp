@@ -244,6 +244,8 @@ class MonteCarloSimulation : public Simulation
     //============= Construction - Setup - Destruction =============
 
 protected:
+    ~MonteCarloSimulation() override;
+
     /** This function performs setup for the complete simulation hierarchy. It calls the regular
         setup() function and notifies the probe system when setup has been completed. */
     void setupSimulation() override;

@@ -1,6 +1,9 @@
 #include "SimulationKernel.hpp"
+#include "CartesianSpatialGrid.hpp"
+#include "MediumSystem.hpp"
+#include "NR.hpp"
 #include <omp.h>
-#include <iterator>
+#include <iostream>
 
 namespace
 {
@@ -58,32 +61,73 @@ namespace
     }
 }
 
-SimulationKernel::SimulationKernel(const CartesianSpatialGrid* grid)
-    : _Nx(grid->_Nx), _Ny(grid->_Ny), _Nz(grid->_Nz),    //
-      _gxv(std::begin(grid->_xv), std::end(grid->_xv)),  //
-      _gyv(std::begin(grid->_yv), std::end(grid->_yv)),  //
-      _gzv(std::begin(grid->_zv), std::end(grid->_zv))
-{}
+// hard coded table index for MediumSystem::_rf1
+inline size_t radIndex(size_t m, size_t ell, size_t num_ell)
+{
+    return m * num_ell + ell;
+}
+
+SimulationKernel::SimulationKernel(SourceSystem* ss, MediumSystem* ms) : _ss(ss), _ms(ms)
+{
+    const auto grid = dynamic_cast<CartesianSpatialGrid*>(_ms->grid());
+    _Nx = grid->_Nx;
+    _Ny = grid->_Ny;
+    _Nz = grid->_Nz;
+    _gxv = grid->_xv;
+    _gyv = grid->_yv;
+    _gzv = grid->_zv;
+
+    // source wavelength grid
+    _Nss = 1000;
+    double lambdaMax = _ss->maxWavelength();
+    double lambdaMin = _ss->minWavelength();
+    Array ss_lambdaa;
+    NR::buildLogGrid(ss_lambdaa, lambdaMin, lambdaMax, _Nss);
+    _ss_lambdav = new double[ss_lambdaa.size()];
+    std::copy(begin(ss_lambdaa), end(ss_lambdaa), _ss_lambdav);
+
+    _crossv = new double[ss_lambdaa.size()];
+    for (int ell = 0; ell < _Nss; ++ell)
+    {
+        double lam = _ss_lambdav[ell];
+        _crossv[ell] = _ms->mix(0, 0)->sectionExt(lam);
+    }
+}
+
+SimulationKernel::~SimulationKernel()
+{
+    delete[] _ss_lambdav;
+    delete[] _crossv;
+}
 
 void SimulationKernel::runBatch()
 {
     // grid
-    double* gxv = _gxv.data();
-    double* gyv = _gyv.data();
-    double* gzv = _gzv.data();
-    int Nx = _Nx;
-    int Ny = _Ny;
-    int Nz = _Nz;
+    size_t Nx = _Nx;
+    size_t Ny = _Ny;
+    size_t Nz = _Nz;
+    double* gxv = std::begin(_gxv);
+    double* gyv = std::begin(_gyv);
+    double* gzv = std::begin(_gzv);
+    // (_numCells, _wavelengthGrid->numBins())
+    size_t Ncell = _ms->numCells();
+    size_t Nrad = _ms->_wavelengthGrid->numBins();
+    double* rf1 = std::begin(_ms->_rf1.data());
+
+    int Nss = _Nss;
+    double* ss_lambdav = _ss_lambdav;
+    double* crossv = _crossv;
 
     // photon packets
     size_t Nb = _photons.batchSize();
+
+    // photon packet
     double* lambdav = _photons.lambdav.data();
     double* weightv = _photons.weightv.data();
     int* iv = _photons.iv.data();
     int* jv = _photons.jv.data();
     int* kv = _photons.kv.data();
     int* mv = _photons.mv.data();
-
     double* rxv = _photons.rxv.data();
     double* ryv = _photons.ryv.data();
     double* rzv = _photons.rzv.data();
@@ -91,22 +135,56 @@ void SimulationKernel::runBatch()
     double* kyv = _photons.kyv.data();
     double* kzv = _photons.kzv.data();
 
+    // peel-off packet
+    double* p_lambdav = _pphotons.lambdav.data();
+    double* p_weightv = _pphotons.weightv.data();
+    int* p_iv = _pphotons.iv.data();
+    int* p_jv = _pphotons.jv.data();
+    int* p_kv = _pphotons.kv.data();
+    int* p_mv = _pphotons.mv.data();
+    double* p_rxv = _pphotons.rxv.data();
+    double* p_ryv = _pphotons.ryv.data();
+    double* p_rzv = _pphotons.rzv.data();
+    double* p_kxv = _pphotons.kxv.data();
+    double* p_kyv = _pphotons.kyv.data();
+    double* p_kzv = _pphotons.kzv.data();
+
+#define NEXT(b, p) \
+    cartesianNext(gxv, gyv, gzv, Nx, Ny, Nz, iv[b], p##jv[b], p##kv[b], p##mv[b], p##rxv[b], p##ryv[b], p##rzv[b], \
+                  p##kxv[b], p##kyv[b], p##kzv[b]);
+
 #pragma omp target data map(to : gxv[0 : Nx + 1], gyv[0 : Ny + 1], gzv[0 : Nz + 1]) \
-    map(to : iv[0 : Nb], jv[0 : Nb], kv[0 : Nb], mv[0 : Nb]) map(to : lambdav[0 : Nb], weightv[0 : Nb]) \
-    map(to : kxv[0 : Nb], kyv[0 : Nb], kzv[0 : Nb]) map(to : rxv[0 : Nb], ryv[0 : Nb], rzv[0 : Nb])
+    map(to : ss_lambdav[0 : Nrad], crossv[0 : Nrad]) MAP_PACKETS(Nb, ) MAP_PACKETS(Nb, p_) \
+    map(tofrom : rf1[0 : Ncell * Nrad])
     {
-#pragma omp target teams distribute parallel for firstprivate(Nx, Ny, Nz, Nb)
+#pragma omp target teams distribute parallel for firstprivate(Nx, Ny, Nz, Nb, Ncell, Nrad, Nss)
         for (size_t b = 0; b != Nb; ++b)
         {
-            double ds = cartesianNext(gxv, gyv, gzv, Nx, Ny, Nz, iv[b], jv[b], kv[b], mv[b], rxv[b], ryv[b], rzv[b],
-                                      kxv[b], kyv[b], kzv[b]);
+            int Ntot = Nrad * Ncell;
 
-            if (mv[b] < 0) continue;
+            for (int r = 0; r < Nrad; ++r)
+            {
+                rf1[r] = 3.14;
+            }
 
-            // launch peel-off
+            // if (mv[b] < 0) continue;
+
+            // int m = mv[b];
+
+            // first attempt: propagate and store rad field
+            // double ds = NEXT(b, );
+
+            // peel-off emission
             //// propagate
             //// peel-off scatter
             //// scatter
         }
+    }
+
+    // debug test
+    int Ntot = Nrad * Ncell;
+    for (int r = 0; r < Nrad; ++r)
+    {
+        std::cout << r << " " << rf1[r] << std::endl;
     }
 }

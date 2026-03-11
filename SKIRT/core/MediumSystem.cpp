@@ -495,5 +495,18 @@ double MediumSystem::opacityExt(double lambda, int m, const PhotonPacket* pp) co
     }
     return result;
 }
+////////////////////////////////////////////////////////////////////
+
+Array MediumSystem::meanIntensity(int m) const
+{
+    int numWavelengths = _wavelengthGrid->numBins();
+    Array Jv(numWavelengths);
+    double factor = 1. / (4. * M_PI * _state.volume(m));
+    for (int ell = 0; ell < numWavelengths; ell++)
+    {
+        Jv[ell] = _rf1(m, ell) * factor / _wavelengthGrid->effectiveWidth(ell);
+    }
+    return Jv;
+}
 
 ////////////////////////////////////////////////////////////////////
