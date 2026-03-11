@@ -37,6 +37,13 @@ private:
     Array _gxv;
     Array _gyv;
     Array _gzv;
+    // densities on grid
+    double* _nv{nullptr};
+
+    // radiation field
+    size_t _Ncell;
+    size_t _Nrad;
+    double* _rf1{nullptr};
 
     // source wavelength grid
     int _Nss{0};

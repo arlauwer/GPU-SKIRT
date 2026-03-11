@@ -92,6 +92,16 @@ SimulationKernel::SimulationKernel(SourceSystem* ss, MediumSystem* ms) : _ss(ss)
         double lam = _ss_lambdav[ell];
         _crossv[ell] = _ms->mix(0, 0)->sectionExt(lam);
     }
+
+    _Ncell = _ms->numCells();
+    _Nrad = _ms->_wavelengthGrid->numBins();
+    _rf1 = std::begin(_ms->_rf1.data());
+
+    _nv = new double[_Ncell];
+    for (int m = 0; m < _Ncell; ++m)
+    {
+        _nv[m] = _ms->numberDensity(m, 0);
+    }
 }
 
 SimulationKernel::~SimulationKernel()
@@ -109,14 +119,19 @@ void SimulationKernel::runBatch()
     double* gxv = std::begin(_gxv);
     double* gyv = std::begin(_gyv);
     double* gzv = std::begin(_gzv);
-    // (_numCells, _wavelengthGrid->numBins())
-    size_t Ncell = _ms->numCells();
-    size_t Nrad = _ms->_wavelengthGrid->numBins();
-    double* rf1 = std::begin(_ms->_rf1.data());
 
+    // source wavelength grid
     int Nss = _Nss;
     double* ss_lambdav = _ss_lambdav;
     double* crossv = _crossv;
+
+    // density
+    size_t Ncell = _Ncell;
+    double* nv = _nv;
+
+    // radiation field
+    size_t Nrad = _Nrad;
+    double* rf1 = _rf1;
 
     // photon packets
     size_t Nb = _photons.batchSize();
@@ -162,14 +177,9 @@ void SimulationKernel::runBatch()
         {
             int Ntot = Nrad * Ncell;
 
-            for (int r = 0; r < Nrad; ++r)
-            {
-                rf1[r] = 3.14;
-            }
+            if (mv[b] < 0) continue;
 
-            // if (mv[b] < 0) continue;
-
-            // int m = mv[b];
+            int m = mv[b];
 
             // first attempt: propagate and store rad field
             // double ds = NEXT(b, );
@@ -179,12 +189,5 @@ void SimulationKernel::runBatch()
             //// peel-off scatter
             //// scatter
         }
-    }
-
-    // debug test
-    int Ntot = Nrad * Ncell;
-    for (int r = 0; r < Nrad; ++r)
-    {
-        std::cout << r << " " << rf1[r] << std::endl;
     }
 }
