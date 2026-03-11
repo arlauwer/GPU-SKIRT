@@ -39,14 +39,6 @@ public:
         position and direction. The batch index is the index of the photon packet in this batch. */
     void launch(size_t batchIndex, double lambda, double L, Position bfr, Direction bfk);
 
-    void setIndex(int i, int j, int k, int m)
-    {
-        iv[i] = i;
-        jv[i] = j;
-        kv[i] = k;
-        mv[i] = m;
-    }
-
     size_t batchSize() const { return _b; }
 
 public:
