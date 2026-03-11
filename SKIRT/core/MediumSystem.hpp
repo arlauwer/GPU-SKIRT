@@ -21,7 +21,6 @@ class MaterialState;
 class PhotonPacket;
 class Random;
 class ShortArray;
-class SpatialGridPath;
 class WavelengthGrid;
 
 //////////////////////////////////////////////////////////////////////

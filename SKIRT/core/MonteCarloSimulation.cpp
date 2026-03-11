@@ -128,8 +128,6 @@ void MonteCarloSimulation::runPrimaryEmission()
             // GPU kernel with prepared photon packets
             _kernel->runBatch();
         }
-
-        delete _kernel;  // why is _config not deleted?
     }
 }
 

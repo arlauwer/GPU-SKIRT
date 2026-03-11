@@ -11,6 +11,7 @@
 
 #include "BruzualCharlotSEDFamily.hpp"
 #include "CartesianSpatialGrid.hpp"
+#include "ConvergenceInfoProbe.hpp"
 #include "CubicSplineSmoothingKernel.hpp"
 #include "DefaultWavelengthDistribution.hpp"
 #include "ExtragalacticUnits.hpp"
@@ -32,6 +33,8 @@
 #include "SourceSystem.hpp"
 #include "SpatialGrid.hpp"
 #include "SpatialGridForm.hpp"
+#include "SpecialtyWavelengthProbe.hpp"
+#include "SpecialtyWhenProbe.hpp"
 #include "StellarUnits.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -199,8 +202,12 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     // probe system and probes
     ItemRegistry::add<ProbeSystem>();
     ItemRegistry::add<Probe>();
+    ItemRegistry::add<SpecialtyProbe>();
+    ItemRegistry::add<SpecialtyWavelengthProbe>();
+    ItemRegistry::add<SpecialtyWhenProbe>();
     ItemRegistry::add<SpatialGridFormProbe>();
     ItemRegistry::add<RadiationFieldProbe>();
+    ItemRegistry::add<ConvergenceInfoProbe>();
     //   .. convergence
     //   .. source
     //   .. spatial grid
