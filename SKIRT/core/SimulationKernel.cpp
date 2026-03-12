@@ -4,6 +4,7 @@
 #include "PhotonPackets.hpp"
 #include "SimulationKernel.hpp"
 #include <omp.h>
+#include <cassert>
 #include <cfloat>
 #include <cmath>
 
@@ -13,13 +14,13 @@ namespace
                                 int& j, int& k, int& m, double& rx, double& ry, double& rz, double& kx, double& ky,
                                 double& kz)
     {
-        int xdir = kx < 0.0;
-        int ydir = ky < 0.0;
-        int zdir = kz < 0.0;
+        int xdir = std::copysign(1, kx);
+        int ydir = std::copysign(1, ky);
+        int zdir = std::copysign(1, kz);
 
-        double xE = (xdir) ? gxv[i] : gxv[i + 1];
-        double yE = (ydir) ? gyv[j] : gyv[j + 1];
-        double zE = (zdir) ? gzv[k] : gzv[k + 1];
+        double xE = (xdir > 0) ? gxv[i + 1] : gxv[i];
+        double yE = (ydir > 0) ? gyv[j + 1] : gyv[j];
+        double zE = (zdir > 0) ? gzv[k + 1] : gzv[k];
         double dsx = (fabs(kx) > 1e-15) ? (xE - rx) / kx : DBL_MAX;
         double dsy = (fabs(ky) > 1e-15) ? (yE - ry) / ky : DBL_MAX;
         double dsz = (fabs(kz) > 1e-15) ? (zE - rz) / kz : DBL_MAX;
@@ -29,7 +30,7 @@ namespace
             rx = xE;
             ry += ky * dsx;
             rz += kz * dsx;
-            i += xdir ? -1 : 1;
+            i += xdir;
             m += xdir * Nz * Ny;
             return dsx;
         }
@@ -38,7 +39,7 @@ namespace
             ry = yE;
             rx += kx * dsy;
             rz += kz * dsy;
-            j += ydir ? -1 : 1;
+            j += ydir;
             m += ydir * Nz;
             return dsy;
         }
@@ -47,7 +48,7 @@ namespace
             rz = zE;
             rx += kx * dsz;
             ry += ky * dsz;
-            k += zdir ? -1 : 1;
+            k += zdir;
             m += zdir;
             return dsz;
         }
@@ -244,12 +245,11 @@ void SimulationKernel::traverse(PhotonPackets& pp)
             // Traverse all cells until the packet exits the grid
             while (inside(Nx, Ny, Nz, iv[b], jv[b], kv[b]) && tau < tauinteractv[b])
             {
-                int m = mv[b];
                 double ds = NEXT(b, );
 				sv[b] += ds;
 
                 // Optical depth contribution from this segment
-                double kappa = nv[m] * crossv[sec_l];
+                double kappa = nv[mv[b]] * crossv[sec_l];
 				tau += kappa * ds;
                 double lnExtEnd = lnExtBeg - tau;
                 double extEnd = exp(lnExtEnd);
@@ -260,7 +260,7 @@ void SimulationKernel::traverse(PhotonPackets& pp)
                 double Lds = weight * extMean * ds;
 
 #pragma omp atomic
-                rad[radIndex(m, rad_l, Nrad)] += Lds;
+                rad[radIndex(mv[b], rad_l, Nrad)] += Lds;
 
                 lnExtBeg = lnExtEnd;
                 extBeg = extEnd;
