@@ -8,6 +8,7 @@
 
 #include "ArrayTable.hpp"
 #include "MaterialMix.hpp"
+#include "PhotonPackets.hpp"
 #include "Range.hpp"
 #include "Table.hpp"
 
@@ -250,6 +251,7 @@ public:
         for the given wavelength and material state. The photon properties are not used. */
     double opacityExt(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
 
+	void performScattering(double lambda, const MaterialState* state, PhotonPackets& pp, size_t b) const override;
     //======== Scattering implementation for dust mixes =======
 
 public:

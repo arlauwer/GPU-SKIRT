@@ -33,6 +33,9 @@ public:
         kxv.resize(_b, 0);
         kyv.resize(_b, 0);
         kzv.resize(_b, 0);
+
+		sv.resize(_b, 0);
+		tauinteractv.resize(_b, 0);
     }
 
     /** This function launches a photon packet with the specified wavelength, luminosity, and
@@ -60,10 +63,14 @@ public:
     vector<double> kxv;
     vector<double> kyv;
     vector<double> kzv;
+
+	vector<double> sv;
+	vector<double> tauinteractv;
 };
 
 #define MAP_PACKETS(Nb, p) \
     map(to : p##lambdav [0:Nb], p##weightv [0:Nb]) map(to : p##iv [0:Nb], p##jv [0:Nb], p##kv [0:Nb], p##mv [0:Nb]) \
-        map(to : p##rxv [0:Nb], p##ryv [0:Nb], p##rzv [0:Nb]) map(to : p##kxv [0:Nb], p##kyv [0:Nb], p##kzv [0:Nb])
+        map(to : p##rxv [0:Nb], p##ryv [0:Nb], p##rzv [0:Nb]) map(to : p##kxv [0:Nb], p##kyv [0:Nb], p##kzv [0:Nb]) \
+			map(to : p##sv [0:Nb], p##tauinteractv [0:Nb])
 
 #endif

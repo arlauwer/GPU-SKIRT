@@ -11,4 +11,6 @@ void PhotonPackets::launch(size_t batchIndex, double lambda, double L, Position 
     kxv[batchIndex] = bfk.x();
     kyv[batchIndex] = bfk.y();
     kzv[batchIndex] = bfk.z();
+
+	sv[batchIndex] = 0;
 }

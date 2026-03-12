@@ -1,7 +1,8 @@
-#include "SimulationKernel.hpp"
 #include "CartesianSpatialGrid.hpp"
 #include "MediumSystem.hpp"
 #include "NR.hpp"
+#include "PhotonPackets.hpp"
+#include "SimulationKernel.hpp"
 #include <omp.h>
 #include <cfloat>
 #include <cmath>
@@ -92,6 +93,7 @@ inline size_t radIndex(size_t m, size_t ell, size_t Nrad)
 
 SimulationKernel::SimulationKernel(SourceSystem* ss, MediumSystem* ms) : _ss(ss), _ms(ms)
 {
+	_random = ss->find<Random>();
     const auto grid = dynamic_cast<CartesianSpatialGrid*>(_ms->grid());
     _Nx = grid->_Nx;
     _Ny = grid->_Ny;
@@ -136,6 +138,39 @@ SimulationKernel::~SimulationKernel()
 
 void SimulationKernel::runBatch()
 {
+	// Peelof emission
+
+	// Loop
+	{
+		// Calculate tauinteractv
+		size_t Nb = _photons.batchSize();
+		for (size_t b = 0; b != Nb; ++b)
+		{
+			double tauinteract = -log(_random->uniform());
+			_photons.tauinteractv[b] = tauinteract;
+		}
+		traverse(_photons);
+		// Remove photons that left the system
+		for (size_t b = 0; b < Nb; ++b)
+		{
+			if (!inside(_Nx, _Ny, _Nz, _photons.iv[b], _photons.jv[b], _photons.kv[b]))
+			{
+				_photons.mv[b] = -1;
+			}
+		}
+		// Not used?
+		vector<int> mv = _photons.mv;
+		vector<double> sv = _photons.sv;
+
+		// Scatter
+		_ms->simulateScattering(_random, _photons);
+		// Peelof scatter
+
+	}
+}
+
+void SimulationKernel::traverse(PhotonPackets& pp)
+{
     // cartesian grid geometry
     int Nx = _Nx;
     int Ny = _Ny;
@@ -162,21 +197,23 @@ void SimulationKernel::runBatch()
     double sec_logLambdaMin = _sec_logLambdaMin;
     double sec_logInvBinWidth = _sec_logInvBinWidth;
 
-    size_t Nb = _photons.batchSize();
+    size_t Nb = pp.batchSize();
 
     // photon packets
-    double* lambdav = _photons.lambdav.data();
-    double* weightv = _photons.weightv.data();
-    int* iv = _photons.iv.data();
-    int* jv = _photons.jv.data();
-    int* kv = _photons.kv.data();
-    int* mv = _photons.mv.data();
-    double* rxv = _photons.rxv.data();
-    double* ryv = _photons.ryv.data();
-    double* rzv = _photons.rzv.data();
-    double* kxv = _photons.kxv.data();
-    double* kyv = _photons.kyv.data();
-    double* kzv = _photons.kzv.data();
+    double* lambdav = pp.lambdav.data();
+    double* weightv = pp.weightv.data();
+    int* iv = pp.iv.data();
+    int* jv = pp.jv.data();
+    int* kv = pp.kv.data();
+    int* mv = pp.mv.data();
+    double* rxv = pp.rxv.data();
+    double* ryv = pp.ryv.data();
+    double* rzv = pp.rzv.data();
+    double* kxv = pp.kxv.data();
+    double* kyv = pp.kyv.data();
+    double* kzv = pp.kzv.data();
+    double* sv = pp.sv.data();
+    double* tauinteractv = pp.tauinteractv.data();
 
 #define NEXT(b, p) \
     cartesianNext(gxv, gyv, gzv, Nx, Ny, Nz, p##iv[b], p##jv[b], p##kv[b], p##mv[b], p##rxv[b], p##ryv[b], p##rzv[b], \
@@ -202,15 +239,19 @@ void SimulationKernel::runBatch()
             double lnExtBeg = 0.0;
             double extBeg = 1.0;
 
+			double tau = 0;
+
             // Traverse all cells until the packet exits the grid
-            while (inside(Nx, Ny, Nz, iv[b], jv[b], kv[b]))
+            while (inside(Nx, Ny, Nz, iv[b], jv[b], kv[b]) && tau < tauinteractv[b])
             {
                 int m = mv[b];
                 double ds = NEXT(b, );
+				sv[b] += ds;
 
                 // Optical depth contribution from this segment
                 double kappa = nv[m] * crossv[sec_l];
-                double lnExtEnd = lnExtBeg - kappa * ds;
+				tau += kappa * ds;
+                double lnExtEnd = lnExtBeg - tau;
                 double extEnd = exp(lnExtEnd);
 
                 // Logarithmic mean extinction over the segment (lnmean of extBeg, extEnd)

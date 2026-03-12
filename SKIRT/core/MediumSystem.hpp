@@ -309,6 +309,9 @@ private:
         photon packet (for example, its polarization state). */
     double opacityExt(double lambda, int m, const PhotonPacket* pp) const;
 
+public:
+    void simulateScattering(Random* random, PhotonPackets& pp) const;
+
     //=============== Radiation field ===================
 
 public:

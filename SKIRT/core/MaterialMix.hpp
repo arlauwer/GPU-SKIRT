@@ -8,6 +8,7 @@
 
 #include "Array.hpp"
 #include "Direction.hpp"
+#include "PhotonPackets.hpp"
 #include "SimulationItem.hpp"
 #include "SnapshotParameter.hpp"
 #include "StateVariable.hpp"
@@ -412,7 +413,7 @@ public:
         recalculated within the function.
 
         The default implementation in this base class throws a fatal error. */
-    virtual void performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const;
+    virtual void performScattering(double lambda, const MaterialState* state, PhotonPackets& pp, size_t b) const;
 
     //======================== Other Functions =======================
 

@@ -5,9 +5,12 @@
 
 #include "DustMix.hpp"
 #include "Configuration.hpp"
+#include "Direction.hpp"
+#include "FatalError.hpp"
 #include "Log.hpp"
 #include "MaterialState.hpp"
 #include "NR.hpp"
+#include "PhotonPackets.hpp"
 #include "Random.hpp"
 #include "StringUtils.hpp"
 #include "Units.hpp"
@@ -366,6 +369,46 @@ double DustMix::phaseFunctionValueForCosine(double lambda, double costheta) cons
 double DustMix::generateCosineFromPhaseFunction(double lambda) const
 {
     return cos(random()->cdfLinLin(_thetav, _thetaXvv[indexForLambda(lambda)]));
+}
+
+////////////////////////////////////////////////////////////////////
+
+void DustMix::performScattering(double lambda, const MaterialState* state, PhotonPackets& pp, size_t b) const
+{
+    // determine the new propagation direction and, if required, update the polarization state of the photon packet
+    Direction bfknew;
+    switch (scatteringMode())
+    {
+        case DustMix::ScatteringMode::HenyeyGreenstein:
+        {
+            // sample a scattering angle from the Henyey-Greenstein phase function
+            // handle isotropic scattering separately because the HG sampling procedure breaks down in this case
+            double g = asymmpar(lambda);
+            if (fabs(g) < 1e-6)
+            {
+                bfknew = random()->direction();
+            }
+            else
+            {
+                double f = ((1.0 - g) * (1.0 + g)) / (1.0 - g + 2.0 * g * random()->uniform());
+                double costheta = (1.0 + g * g - f * f) / (2.0 * g);
+				Direction dir(pp.kxv[b], pp.kyv[b], pp.kzv[b], false);
+                bfknew = random()->direction(dir, costheta);
+            }
+            break;
+        }
+        case DustMix::ScatteringMode::MaterialPhaseFunction:
+        case DustMix::ScatteringMode::SphericalPolarization:
+        case DustMix::ScatteringMode::SpheroidalPolarization:
+        {
+			throw FATALERROR("Only HenyeyGreenstein is supported.");
+        }
+    }
+
+    // execute the scattering event in the photon packet
+	pp.kxv[b] = bfknew.kx();
+	pp.kyv[b] = bfknew.ky();
+	pp.kzv[b] = bfknew.kz();
 }
 
 ////////////////////////////////////////////////////////////////////

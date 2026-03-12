@@ -510,3 +510,22 @@ Array MediumSystem::meanIntensity(int m) const
 }
 
 ////////////////////////////////////////////////////////////////////
+
+void MediumSystem::simulateScattering(Random* random, PhotonPackets& pp) const
+{
+	size_t Nb = pp.batchSize();
+	for (size_t b = 0; b != Nb; ++b)
+	{
+		// locate the cell hosting the scattering event
+		int m = pp.mv[b];
+
+		// calculate the perceived wavelength in the cell
+		double lambda = pp.lambdav[b];
+
+		// actually perform the scattering event for this cell and medium component
+		MaterialState mst(_state, m, 0);
+		mix(m, 0)->performScattering(lambda, &mst, pp, b);
+	}
+}
+
+////////////////////////////////////////////////////////////////////

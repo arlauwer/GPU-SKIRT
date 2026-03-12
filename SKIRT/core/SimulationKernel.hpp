@@ -7,6 +7,7 @@
 #define SIMULATIONKERNEL_HPP
 
 #include "CartesianSpatialGrid.hpp"
+#include "Random.hpp"
 #include "PhotonPackets.hpp"
 #include "SourceSystem.hpp"
 
@@ -20,6 +21,8 @@ public:
     virtual ~SimulationKernel();
 
     void runBatch();
+
+	void traverse(PhotonPackets& pp);
 
     PhotonPackets& photons() { return _photons; }
 
@@ -55,6 +58,8 @@ private:
     // log-spaced wavelength grid for cross section lookups
     double _sec_logLambdaMin{0.0};
     double _sec_logInvBinWidth{0.0};
+
+	Random* _random;
 };
 
 #endif

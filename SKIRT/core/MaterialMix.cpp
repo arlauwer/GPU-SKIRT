@@ -6,6 +6,7 @@
 #include "MaterialMix.hpp"
 #include "Configuration.hpp"
 #include "FatalError.hpp"
+#include "PhotonPackets.hpp"
 #include "Random.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -86,7 +87,7 @@ bool MaterialMix::peeloffScattering(double& /*I*/, double& /*Q*/, double& /*U*/,
 
 ////////////////////////////////////////////////////////////////////
 
-void MaterialMix::performScattering(double /*lambda*/, const MaterialState* /*state*/, PhotonPacket* /*pp*/) const
+void MaterialMix::performScattering(double /*lambda*/, const MaterialState* /*state*/, PhotonPackets& /*pp*/, size_t /*b*/) const
 {
     throw FATALERROR("This function implementation should never be called");
 }
