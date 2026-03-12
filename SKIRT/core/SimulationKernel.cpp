@@ -18,6 +18,7 @@ namespace
         int ydir = std::copysign(1, ky);
         int zdir = std::copysign(1, kz);
 
+		assert(i >= 0 && i < Nx+1);
         double xE = (xdir > 0) ? gxv[i + 1] : gxv[i];
         double yE = (ydir > 0) ? gyv[j + 1] : gyv[j];
         double zE = (zdir > 0) ? gzv[k + 1] : gzv[k];
@@ -205,11 +206,12 @@ void SimulationKernel::runBatch()
             double extBeg = 1.0;
 
             // Traverse all cells until the packet exits the grid
+			double ds = NEXT(b, );
             while (inside(Nx, Ny, Nz, iv[b], jv[b], kv[b]))
             {
-                double ds = NEXT(b, );
 
                 // Optical depth contribution from this segment
+				assert(mv[b] >= 0);
                 double kappa = nv[mv[b]] * crossv[sec_l];
                 double lnExtEnd = lnExtBeg - kappa * ds;
                 double extEnd = exp(lnExtEnd);
@@ -224,6 +226,7 @@ void SimulationKernel::runBatch()
 
                 lnExtBeg = lnExtEnd;
                 extBeg = extEnd;
+                double ds = NEXT(b, );
             }
         }
     }
