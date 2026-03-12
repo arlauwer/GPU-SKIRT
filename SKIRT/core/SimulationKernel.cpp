@@ -243,6 +243,7 @@ void SimulationKernel::traverse(PhotonPackets& pp)
             double tau = 0;
 
             // Traverse all cells until the packet exits the grid
+            int m;
             double ds = NEXT(b, );
             while (inside(Nx, Ny, Nz, iv[b], jv[b], kv[b]) && tau < tauinteractv[b])
             {
@@ -261,10 +262,11 @@ void SimulationKernel::traverse(PhotonPackets& pp)
                 double Lds = weight * extMean * ds;
 
 #pragma omp atomic
-                rad[radIndex(mv[b], rad_l, Nrad)] += Lds;
+                rad[radIndex(m, rad_l, Nrad)] += Lds;
 
                 lnExtBeg = lnExtEnd;
                 extBeg = extEnd;
+                m = mv[b];
                 double ds = NEXT(b, );
             }
         }

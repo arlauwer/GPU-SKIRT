@@ -17,7 +17,7 @@ if(POLICY CMP0156)
 endif()
 
 # define project
-project(SKIRTproject LANGUAGES CXX)
+project(SKIRTproject)
 
 # define a user-configurable option to build SKIRT
 option(BUILD_SKIRT "build SKIRT, advanced radiative transfer" ON)

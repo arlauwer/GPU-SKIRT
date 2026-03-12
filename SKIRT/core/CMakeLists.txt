@@ -22,8 +22,8 @@ target_link_libraries(${TARGET} schema fundamentals)
 target_include_directories(${TARGET} PRIVATE ../../SMILE/schema ../../SMILE/fundamentals)
 
 # SKIRT library dependencies
-target_link_libraries(${TARGET} utils)
-target_include_directories(${TARGET} PRIVATE ../utils)
+target_link_libraries(${TARGET} fitsio utils)
+target_include_directories(${TARGET} PRIVATE ../fitsio ../utils)
 
 # adjust C++ compiler flags to our needs
 include("../../SMILE/build/CompilerFlags.cmake")

@@ -240,3 +240,43 @@ void ProbeFormBridge::valuesInCell(int m, Array& values) const
 }
 
 ////////////////////////////////////////////////////////////////////
+
+void ProbeFormBridge::valuesAtPosition(Position bfr, Array& values) const
+{
+    switch (_type)
+    {
+        case Type::GridScalarAccumulated:
+        case Type::GridScalarAveraged:
+        case Type::GridVectorAveraged:
+        case Type::GridCompoundAccumulated:
+        case Type::GridCompoundAveraged:
+        {
+            int m = _grid ? _grid->cellIndex(bfr) : -1;
+            if (m >= 0)
+                valuesInCell(m, values);
+            else
+                values = 0.;
+            break;
+        }
+        case Type::InputScalar:
+        {
+            values[0] = _scalarValueAtPosition(bfr) * _unitFactor;
+            break;
+        }
+        case Type::InputVector:
+        {
+            Vec v = _vectorValueAtPosition(bfr) * _unitFactor;
+            values[0] = v.x();
+            values[1] = v.y();
+            values[2] = v.z();
+            break;
+        }
+        case Type::InputCompound:
+        {
+            values = _compoundValueAtPosition(bfr);
+            break;
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////////////

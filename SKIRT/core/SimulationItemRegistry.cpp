@@ -13,6 +13,7 @@
 #include "CartesianSpatialGrid.hpp"
 #include "ConvergenceInfoProbe.hpp"
 #include "CubicSplineSmoothingKernel.hpp"
+#include "DefaultCutsForm.hpp"
 #include "DefaultWavelengthDistribution.hpp"
 #include "ExtragalacticUnits.hpp"
 #include "FileSED.hpp"
@@ -221,6 +222,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<Form>();
     ItemRegistry::add<SpatialGridForm>();
     ItemRegistry::add<PerCellForm>();
+    ItemRegistry::add<DefaultCutsForm>();
 
     // Monte Carlo simulations
     ItemRegistry::add<MonteCarloSimulation>();

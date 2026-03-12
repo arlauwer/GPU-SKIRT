@@ -8,6 +8,7 @@
 # ------------------------------------------------------------------
 
 # add all relevant subdirectories; each subdirectory defines a single target
+add_subdirectory(fitsio)
 add_subdirectory(utils)
 add_subdirectory(core)
 add_subdirectory(main)
