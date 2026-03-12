@@ -1,8 +1,8 @@
+#include "SimulationKernel.hpp"
 #include "CartesianSpatialGrid.hpp"
 #include "MediumSystem.hpp"
 #include "NR.hpp"
 #include "PhotonPackets.hpp"
-#include "SimulationKernel.hpp"
 #include <omp.h>
 #include <cassert>
 #include <cfloat>
@@ -18,6 +18,7 @@ namespace
         int ydir = std::copysign(1, ky);
         int zdir = std::copysign(1, kz);
 
+        assert(i >= 0 && i < Nx + 1);
         double xE = (xdir > 0) ? gxv[i + 1] : gxv[i];
         double yE = (ydir > 0) ? gyv[j + 1] : gyv[j];
         double zE = (zdir > 0) ? gzv[k + 1] : gzv[k];
@@ -94,7 +95,7 @@ inline size_t radIndex(size_t m, size_t ell, size_t Nrad)
 
 SimulationKernel::SimulationKernel(SourceSystem* ss, MediumSystem* ms) : _ss(ss), _ms(ms)
 {
-	_random = ss->find<Random>();
+    _random = ss->find<Random>();
     const auto grid = dynamic_cast<CartesianSpatialGrid*>(_ms->grid());
     _Nx = grid->_Nx;
     _Ny = grid->_Ny;
@@ -139,35 +140,34 @@ SimulationKernel::~SimulationKernel()
 
 void SimulationKernel::runBatch()
 {
-	// Peelof emission
+    // Peelof emission
 
-	// Loop
-	{
-		// Calculate tauinteractv
-		size_t Nb = _photons.batchSize();
-		for (size_t b = 0; b != Nb; ++b)
-		{
-			double tauinteract = -log(_random->uniform());
-			_photons.tauinteractv[b] = tauinteract;
-		}
-		traverse(_photons);
-		// Remove photons that left the system
-		for (size_t b = 0; b < Nb; ++b)
-		{
-			if (!inside(_Nx, _Ny, _Nz, _photons.iv[b], _photons.jv[b], _photons.kv[b]))
-			{
-				_photons.mv[b] = -1;
-			}
-		}
-		// Not used?
-		vector<int> mv = _photons.mv;
-		vector<double> sv = _photons.sv;
+    // Loop
+    {
+        // Calculate tauinteractv
+        size_t Nb = _photons.batchSize();
+        for (size_t b = 0; b != Nb; ++b)
+        {
+            double tauinteract = -log(_random->uniform());
+            _photons.tauinteractv[b] = tauinteract;
+        }
+        traverse(_photons);
+        // Remove photons that left the system
+        for (size_t b = 0; b < Nb; ++b)
+        {
+            if (!inside(_Nx, _Ny, _Nz, _photons.iv[b], _photons.jv[b], _photons.kv[b]))
+            {
+                _photons.mv[b] = -1;
+            }
+        }
+        // Not used?
+        vector<int> mv = _photons.mv;
+        vector<double> sv = _photons.sv;
 
-		// Scatter
-		_ms->simulateScattering(_random, _photons);
-		// Peelof scatter
-
-	}
+        // Scatter
+        _ms->simulateScattering(_random, _photons);
+        // Peelof scatter
+    }
 }
 
 void SimulationKernel::traverse(PhotonPackets& pp)
@@ -240,17 +240,18 @@ void SimulationKernel::traverse(PhotonPackets& pp)
             double lnExtBeg = 0.0;
             double extBeg = 1.0;
 
-			double tau = 0;
+            double tau = 0;
 
             // Traverse all cells until the packet exits the grid
+            double ds = NEXT(b, );
             while (inside(Nx, Ny, Nz, iv[b], jv[b], kv[b]) && tau < tauinteractv[b])
             {
-                double ds = NEXT(b, );
-				sv[b] += ds;
+                sv[b] += ds;
 
                 // Optical depth contribution from this segment
+                assert(mv[b] >= 0);
                 double kappa = nv[mv[b]] * crossv[sec_l];
-				tau += kappa * ds;
+                tau += kappa * ds;
                 double lnExtEnd = lnExtBeg - tau;
                 double extEnd = exp(lnExtEnd);
 
@@ -264,6 +265,7 @@ void SimulationKernel::traverse(PhotonPackets& pp)
 
                 lnExtBeg = lnExtEnd;
                 extBeg = extEnd;
+                double ds = NEXT(b, );
             }
         }
     }
