@@ -227,7 +227,8 @@ void SimulationKernel::traverse(PhotonPackets& pp)
         Nx, Ny, Nz, Nb, Ncell, Nrad, sec_logLambdaMin, sec_logInvBinWidth, rad_logLambdaMin, rad_logInvBinWidth)
         for (size_t b = 0; b != Nb; ++b)
         {
-            if (mv[b] < 0) continue;
+            int m = mv[b];
+            if (m < 0) continue;
 
             double lambda = lambdav[b];
             double llambda = std::log10(lambda);
@@ -243,15 +244,16 @@ void SimulationKernel::traverse(PhotonPackets& pp)
             double tau = 0;
 
             // Traverse all cells until the packet exits the grid
-            int m;
-            double ds = NEXT(b, );
             while (inside(Nx, Ny, Nz, iv[b], jv[b], kv[b]) && tau < tauinteractv[b])
             {
+                m = mv[b];
+
+                double ds = NEXT(b, );
+
                 sv[b] += ds;
 
                 // Optical depth contribution from this segment
-                assert(mv[b] >= 0);
-                double kappa = nv[mv[b]] * crossv[sec_l];
+                double kappa = nv[m] * crossv[sec_l];
                 tau += kappa * ds;
                 double lnExtEnd = lnExtBeg - tau;
                 double extEnd = exp(lnExtEnd);
@@ -261,13 +263,12 @@ void SimulationKernel::traverse(PhotonPackets& pp)
 
                 double Lds = weight * extMean * ds;
 
+// Atomic update of the radiation field
 #pragma omp atomic
                 rad[radIndex(m, rad_l, Nrad)] += Lds;
 
                 lnExtBeg = lnExtEnd;
                 extBeg = extEnd;
-                m = mv[b];
-                double ds = NEXT(b, );
             }
         }
     }
