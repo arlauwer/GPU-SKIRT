@@ -516,6 +516,7 @@ void MediumSystem::simulateScattering(Random* random, PhotonPackets& pp) const
 	size_t Nb = pp.batchSize();
 	for (size_t b = 0; b != Nb; ++b)
 	{
+		if (pp.mv[b] == -1) continue;
 		// locate the cell hosting the scattering event
 		int m = pp.mv[b];
 

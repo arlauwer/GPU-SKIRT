@@ -123,7 +123,7 @@ void MonteCarloSimulation::runPrimaryEmission()
             // launch photon packets in parallel
             // this prepares the data-oriented structure, PhotonPackets, for the GPU kernel
             parallel->call(currentBatch,
-                           [this, &photons, firstIndex](size_t i, size_t n) { launch(photons, firstIndex + i, n); });
+                           [this, &photons, firstIndex](size_t i, size_t n) { launch(photons, i, firstIndex + i, n); });
 
             // GPU kernel with prepared photon packets
             _kernel->runBatch();
@@ -152,29 +152,27 @@ void MonteCarloSimulation::logProgress(size_t numDone)
 
 ////////////////////////////////////////////////////////////////////
 
-void MonteCarloSimulation::launch(PhotonPackets& pp, size_t firstIndex, size_t numIndices)
+void MonteCarloSimulation::launch(PhotonPackets& pp, size_t slotIndex, size_t firstIndex, size_t numIndices)
 {
     auto ss = sourceSystem();
     auto cart = dynamic_cast<CartesianSpatialGrid*>(mediumSystem()->grid());
     for (size_t b = 0; b != numIndices; ++b)
     {
-        ss->launch(pp, firstIndex + b, b);
-
+        size_t slot = slotIndex + b;
+        ss->launch(pp, firstIndex + b, slot);
         // set initial cell index
-        double x = pp.rxv[b];
-        double y = pp.ryv[b];
-        double z = pp.rzv[b];
+        double x = pp.rxv[slot];
+        double y = pp.ryv[slot];
+        double z = pp.rzv[slot];
         Position r(x, y, z);
-
         int i, j, k;
         cart->cellIndices(i, j, k, r);
         int m = cart->index(i, j, k);
-
         // set cell indices
-        pp.iv[b] = i;
-        pp.jv[b] = j;
-        pp.kv[b] = k;
-        pp.mv[b] = m;
+        pp.iv[slot] = i;
+        pp.jv[slot] = j;
+        pp.kv[slot] = k;
+        pp.mv[slot] = m;
     }
 }
 

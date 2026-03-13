@@ -7,6 +7,7 @@
 #include <cassert>
 #include <cfloat>
 #include <cmath>
+#include <cstddef>
 
 namespace
 {
@@ -140,12 +141,13 @@ SimulationKernel::~SimulationKernel()
 
 void SimulationKernel::runBatch()
 {
+
     // Peelof emission
 
     // Loop
-	size_t ic = 0;
+	bool done = false;
 	size_t Nb = _photons.batchSize();
-	while (ic < Nb)
+	while (!done)
     {
         // Calculate tauinteractv
         for (size_t b = 0; b != Nb; ++b)
@@ -155,20 +157,24 @@ void SimulationKernel::runBatch()
         }
         traverse(_photons);
         // Remove photons that left the system
+		done = true;
         for (size_t b = 0; b < Nb; ++b)
         {
-            if (!inside(_Nx, _Ny, _Nz, _photons.iv[b], _photons.jv[b], _photons.kv[b]))
-            {
-                _photons.mv[b] = -1;
-				ic++;
-            }
+			if (inside(_Nx, _Ny, _Nz, _photons.iv[b], _photons.jv[b], _photons.kv[b]))
+			{
+				done = false;
+			}
+			else
+			{
+				_photons.mv[b] = -1;
+			}
         }
         // Not used?
         vector<int> mv = _photons.mv;
         vector<double> sv = _photons.sv;
 
         // Scatter
-        _ms->simulateScattering(_random, _photons);
+		if (!done) _ms->simulateScattering(_random, _photons);
         // Peelof scatter
     }
 }
@@ -257,8 +263,9 @@ void SimulationKernel::traverse(PhotonPackets& pp)
 
                 // Optical depth contribution from this segment
                 double kappa = nv[m] * crossv[sec_l];
-                tau += kappa * ds;
-                double lnExtEnd = lnExtBeg - tau;
+                double dtau = kappa * ds;
+				tau += dtau;
+                double lnExtEnd = lnExtBeg - dtau;
                 double extEnd = exp(lnExtEnd);
 
                 // Logarithmic mean extinction over the segment (lnmean of extBeg, extEnd)

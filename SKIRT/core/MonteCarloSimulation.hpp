@@ -296,7 +296,7 @@ private:
         of photon packets processed. */
     void logProgress(size_t numDone);
 
-    void launch(PhotonPackets& pp, size_t firstIndex, size_t numIndices);
+    void launch(PhotonPackets& pp, size_t slotIndex, size_t firstIndex, size_t numIndices);
 
     //======================== Data Members ========================
 
