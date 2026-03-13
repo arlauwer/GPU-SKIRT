@@ -143,9 +143,11 @@ void SimulationKernel::runBatch()
     // Peelof emission
 
     // Loop
+	size_t ic = 0;
+	size_t Nb = _photons.batchSize();
+	while (ic < Nb)
     {
         // Calculate tauinteractv
-        size_t Nb = _photons.batchSize();
         for (size_t b = 0; b != Nb; ++b)
         {
             double tauinteract = -log(_random->uniform());
@@ -158,6 +160,7 @@ void SimulationKernel::runBatch()
             if (!inside(_Nx, _Ny, _Nz, _photons.iv[b], _photons.jv[b], _photons.kv[b]))
             {
                 _photons.mv[b] = -1;
+				ic++;
             }
         }
         // Not used?
